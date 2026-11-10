@@ -20,3 +20,6 @@ results/*
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Generated dataset audit outputs (keep raw-derived artefacts out of Git)
+reports/generated/
