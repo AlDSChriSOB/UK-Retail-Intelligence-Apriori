@@ -1,0 +1,7 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the repository and the UCI dataset."
+title: "UK Retail Intelligence using Apriori"
+type: software
+authors:
+  - family-names: Obiechina
+    given-names: Christian Somtoo
