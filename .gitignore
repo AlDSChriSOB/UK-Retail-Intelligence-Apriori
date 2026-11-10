@@ -1,0 +1,22 @@
+# Environments and caches
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Raw and processed data
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Generated results: commit selected final outputs only
+results/*
+!results/figures/.gitkeep
+!results/tables/.gitkeep
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
