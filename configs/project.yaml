@@ -1,0 +1,14 @@
+dataset:
+  url: "https://archive.ics.uci.edu/static/public/352/online+retail.zip"
+  zip_path: "data/raw/online-retail.zip"
+  extract_dir: "data/raw"
+  excel_file: "data/raw/Online Retail.xlsx"
+
+analysis:
+  country: "United Kingdom"
+  min_support: 0.01
+  min_confidence: 0.20
+  max_len: 3
+  discovery_end: "2011-08-31"
+  random_seed: 42
+  holdout_item_fraction: 0.30
