@@ -51,6 +51,18 @@ These are analytical decisions, not universal rules. Report the number of rows r
 - src/: acquisition, cleaning, Apriori and validation code
 - tests/: deterministic unit tests
 
+## Dataset audit and cleaning report
+
+After installing dependencies, run:
+
+```bash
+python -m src.audit
+```
+
+This downloads the official UCI archive when the workbook is not already present in data/raw/, audits provenance/schema/missingness/duplicates/cancellations/returns/prices/countries/dates/product-code consistency, applies the documented positive-sales cleaning policy, and builds UK invoice-level binary baskets. It writes the measured Markdown report and CSV/JSON artefacts to reports/generated/. The raw workbook remains local and is not committed.
+
+Missing CustomerID values are retained for invoice-level basket analysis. Cancellation invoices, non-positive quantities and non-positive unit prices are profiled and excluded from the positive-sales basket population. Exact duplicate rows are reported but not blindly removed; binary invoice-item construction handles repeated item lines transparently.
+
 ## Setup
 
 Use Python 3.10 or later. Create and activate a virtual environment, then install dependencies with pip install -r requirements.txt. Run python -m src.data from the repository root to download, audit, clean and construct the basket matrix. Open notebooks/01_apriori_retail_analysis.ipynb and run cells in order.
