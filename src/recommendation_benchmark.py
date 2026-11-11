@@ -7,6 +7,7 @@ The visible remainder is the query context. No test labels inform training.
 """
 from __future__ import annotations
 import argparse
+import csv
 import json
 from pathlib import Path
 import numpy as np
@@ -61,7 +62,7 @@ def rank(context, popularity, cooccurrence, rules, method, k):
 
 
 def benchmark(matrix, train_fraction=0.7, k_values=(5, 10), seed=42,
-              min_support=0.01, min_confidence=0.20):
+              min_support=0.01, min_confidence=0.20, outcome_csv=None):
     if not 0 < train_fraction < 1:
         raise ValueError("train_fraction must be between 0 and 1")
     cut = int(matrix.shape[0] * train_fraction)
@@ -73,6 +74,7 @@ def benchmark(matrix, train_fraction=0.7, k_values=(5, 10), seed=42,
     methods = ("popularity", "cooccurrence", "apriori")
     hits = {m: {k: 0 for k in k_values} for m in methods}
     eligible = 0
+    invoice_outcomes = []
     test_csr = test.tocsr()
     for i in range(test_csr.shape[0]):
         items = test_csr.indices[test_csr.indptr[i]:test_csr.indptr[i + 1]]
@@ -82,12 +84,23 @@ def benchmark(matrix, train_fraction=0.7, k_values=(5, 10), seed=42,
         target = int(items[target_position])
         context = np.delete(items, target_position)
         eligible += 1
+        invoice_result = {"test_invoice_row": i}
         for method in methods:
             ranked = rank(context, popularity, cooccurrence, rules, method, max(k_values))
             for k in k_values:
-                hits[method][k] += int(target in ranked[:k])
+                hit = int(target in ranked[:k])
+                hits[method][k] += hit
+                invoice_result[f"{method}_at_{k}"] = hit
+        invoice_outcomes.append(invoice_result)
     if not eligible:
         raise ValueError("No eligible test baskets")
+    if outcome_csv is not None:
+        path = Path(outcome_csv)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(invoice_outcomes[0]))
+            writer.writeheader()
+            writer.writerows(invoice_outcomes)
     # Exactly one hidden item per invoice, so precision@K = hits/(N*K),
     # recall@K = hit_rate@K = hits/N.
     return {
@@ -117,10 +130,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("workbook")
     parser.add_argument("--output", default="reports/generated/recommendation_benchmark.json")
+    parser.add_argument("--outcomes", default="reports/generated/per_invoice_hits.csv")
     args = parser.parse_args()
     data, cleaning = clean_transactions(load_transactions(Path(args.workbook)))
     grouped, codes, matrix = invoice_matrix(data)
-    result = benchmark(matrix)
+    result = benchmark(matrix, outcome_csv=args.outcomes)
     result["cleaning"] = cleaning
     result["product_count"] = len(codes)
     result["last_train_date"] = str(grouped.iloc[result["train_invoices"] - 1]["date"])
