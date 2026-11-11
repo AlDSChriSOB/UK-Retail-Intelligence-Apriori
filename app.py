@@ -6,7 +6,7 @@ Requires the UCI workbook at data/raw/Online Retail.xlsx.
 from pathlib import Path
 import numpy as np
 import streamlit as st
-from src.data import load_transactions, clean_transactions
+from src.data import load_transactions, clean_transactions, download_dataset, extract_dataset
 from src.chronological_holdout import invoice_matrix
 from src.recommendation_benchmark import fit_models, rank
 
@@ -15,8 +15,13 @@ st.title("UK Retail Basket Intelligence")
 st.caption("Historical UCI Online Retail data (2010–2011). Research demonstration, not a live shopping service.")
 workbook = Path("data/raw/Online Retail.xlsx")
 if not workbook.exists():
-    st.warning("Source workbook missing. Download the UCI Online Retail workbook into data/raw/Online Retail.xlsx.")
-    st.stop()
+    st.info("Preparing the openly licensed UCI Online Retail dataset on first launch. This can take a few minutes.")
+    try:
+        with st.spinner("Downloading and extracting official UCI archive…"):
+            workbook = extract_dataset(download_dataset())
+    except Exception as exc:
+        st.error(f"Dataset preparation failed: {exc}")
+        st.stop()
 
 @st.cache_resource(show_spinner="Preparing training-only recommendation models…")
 def load_models(path, modified):
