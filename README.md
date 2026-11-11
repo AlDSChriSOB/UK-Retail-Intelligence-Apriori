@@ -1,93 +1,71 @@
-# UK Retail Intelligence using Apriori
+# UK Retail Intelligence — Association Rules and Basket Completion
 
-**Research project:** Discovering and evaluating product association rules in historical UK retail transactions.
+[![Python tests](https://github.com/AlDSChriSOB/UK-Retail-Intelligence-Apriori/actions/workflows/python-tests.yml/badge.svg)](https://github.com/AlDSChriSOB/UK-Retail-Intelligence-Apriori/actions/workflows/python-tests.yml)
 
-**Status:** Research scaffold. No empirical findings are claimed until the UCI data pipeline and holdout evaluation have been executed.
+**Research-oriented data science portfolio project:** discovering product associations and evaluating historical basket-completion recommendations against transparent baselines.
+
+> **Dataset scope:** UCI Online Retail (December 2010–December 2011) is one UK-based online retailer with international customers. It is **not** a contemporary or representative UK supermarket dataset.
 
 ## Research question
 
-Can Apriori identify meaningful product associations in historical transactions from a UK-based online retailer, and do rules discovered in an earlier period generalise to later transactions?
+Do directional two-item association rules learned from earlier transactions recover withheld products in later invoices more effectively than popularity and simple co-occurrence baselines? How sensitive are conclusions to chronological windows, masking seeds and candidate catalogue duplicates?
 
-## Dataset
+## Main findings (historical benchmark)
 
-- Source: [UCI Online Retail](https://archive.ics.uci.edu/dataset/352/online+retail)
-- DOI: https://doi.org/10.24432/C5BW33
-- Citation: Chen, D. (2015). *Online Retail* [Dataset]. UCI Machine Learning Repository.
-- Coverage: 1 December 2010 to 9 December 2011; 541,909 source records.
-- The source is one UK-based non-store retailer, not a representative sample of all UK supermarkets or present-day UK consumers.
-- The dataset contains transactions from multiple countries. The primary analysis filters Country == "United Kingdom".
+| Method | Hit Rate@5 | Hit Rate@10 |
+|---|---:|---:|
+| Popularity | 2.04% | 3.78% |
+| Co-occurrence | 7.62% | 11.29% |
+| Directional pair rules | **8.71%** | **11.87%** |
 
-The dataset is licensed CC BY 4.0. Attribute the dataset creator and UCI. Raw data is downloaded from UCI and is not committed to this repository.
+- Chronological 70/30 invoice split: **12,613** training invoices; **5,406** test invoices; **4,997** test invoices with at least two distinct products.
+- One seeded product hidden per eligible test basket; remaining products form the query.
+- At K=10, pair rules exceeded co-occurrence by **0.58 percentage points**. The previously reported paired 95% bootstrap interval was **−0.18 to +1.32 percentage points**, so **superiority over co-occurrence is not established**.
+- Temporal 60/40 and 80/20 comparisons and five masking seeds are documented in [research reports](reports/). Collapsing 129 shared-description candidate groups (265 codes) into representatives changed performance only modestly for the two checked seeds.
+- This is **basket completion**, not future-session prediction, causal uplift or a live recommendation service.
 
-## Research workflow
+### Results visualisation
 
-1. Download and audit the original workbook.
-2. Apply transparent cleaning rules and report row counts.
-3. Construct invoice-level binary baskets using StockCode.
-4. Mine frequent itemsets with an independently implemented Apriori algorithm.
-5. Validate itemsets and support against mlxtend.
-6. Evaluate support/confidence thresholds, rule redundancy and stability.
-7. Discover rules in an earlier period and evaluate them on a later chronological holdout.
-8. Compare masked-item recommendation performance against popularity and co-occurrence baselines.
+The notebook generates `results/figures/hit_rate_by_method.png` from actual benchmark outputs; the image is not hard-coded into this repository.
 
-## Primary cleaning policy
+## Explore the project
 
-- Require non-missing invoice number, stock code and invoice date.
-- Exclude cancellation invoices whose InvoiceNo begins with C.
-- Exclude non-positive quantities and unit prices from the primary sales-basket analysis; profile these records separately.
-- Filter to United Kingdom.
-- Retain missing CustomerID because baskets are invoice-based.
-- Collapse repeated invoice/product rows to binary presence.
-- Use StockCode as the item identifier.
+| Component | Where |
+|---|---|
+| Research notebook | [notebooks/02_recommendation_research.ipynb](notebooks/02_recommendation_research.ipynb) |
+| Interactive demo | [app.py](app.py) |
+| Benchmark implementation | [src/recommendation_benchmark.py](src/recommendation_benchmark.py) |
+| Paired bootstrap | [src/paired_bootstrap.py](src/paired_bootstrap.py) |
+| Catalogue sensitivity | [src/catalogue_sensitivity.py](src/catalogue_sensitivity.py) |
+| Research reports | [reports/](reports/) |
+| CI workflow | [.github/workflows/python-tests.yml](.github/workflows/python-tests.yml) |
 
-These are analytical decisions, not universal rules. Report the number of rows removed at every stage.
+## Reproduce
 
-## Repository structure
-
-- configs/: analysis configuration
-- data/raw/: downloaded source data (git-ignored)
-- notebooks/: end-to-end exploratory and baseline analysis
-- results/tables/ and results/figures/: generated outputs (git-ignored by default)
-- src/: acquisition, cleaning, Apriori and validation code
-- tests/: deterministic unit tests
-
-## Dataset audit and cleaning report
-
-After installing dependencies, run:
+Use Python 3.11 or later:
 
 ```bash
-python -m src.audit
+python -m pip install -r requirements.txt
+python -m src.data
+python -m pytest -q
+python -m src.recommendation_benchmark "data/raw/Online Retail.xlsx"
+python -m src.paired_bootstrap reports/generated/per_invoice_hits.csv
+python -m src.catalogue_sensitivity "data/raw/Online Retail.xlsx"
+streamlit run app.py
 ```
 
-This downloads the official UCI archive when the workbook is not already present in data/raw/, audits provenance/schema/missingness/duplicates/cancellations/returns/prices/countries/dates/product-code consistency, applies the documented positive-sales cleaning policy, and builds UK invoice-level binary baskets. It writes the measured Markdown report and CSV/JSON artefacts to reports/generated/. The raw workbook remains local and is not committed.
+The dataset downloader retrieves the [official UCI Online Retail archive](https://archive.ics.uci.edu/dataset/352/online+retail). Raw data are not committed. The notebook can be opened from the repository or notebooks directory. Running it writes charts and results locally.
 
-Missing CustomerID values are retained for invoice-level basket analysis. Cancellation invoices, non-positive quantities and non-positive unit prices are profiled and excluded from the positive-sales basket population. Exact duplicate rows are reported but not blindly removed; binary invoice-item construction handles repeated item lines transparently.
+### Research design
 
-## Setup
+Cleaning removes cancellations, nonpositive quantities and prices, and non-UK transactions; missing CustomerID is retained for invoice-level analysis. The first 70% of invoices sorted by earliest invoice timestamp are used for training. Popularity uses training product frequencies, co-occurrence sums training pair counts, and the association-rule model sums confidences of training-derived directional pairs (minimum support 1%, confidence 20%). All exclude visible basket items. A tiny popularity fallback is used for candidates without association scores. No test invoices are used to fit these models.
 
-Use Python 3.10 or later. Create and activate a virtual environment, then install dependencies with pip install -r requirements.txt. Run python -m src.data from the repository root to download, audit, clean and construct the basket matrix. Open notebooks/01_apriori_retail_analysis.ipynb and run cells in order.
+**Terminology:** The recommender implemented here mines **two-item directional association rules**. It should not be described as an exhaustive general multi-item Apriori implementation without a separate implementation and validation.
 
-## Reproducibility and research safeguards
+### Limitations and interpretation
 
-- The discovery cutoff is initially 31 August 2011; the later period is reserved for evaluation.
-- Select thresholds using discovery data only. Do not tune on the final holdout.
-- Validate implementation outputs against mlxtend and hand-computed examples.
-- Record package versions, thresholds, cleaning counts and random seeds.
-- Do not claim that association implies causation.
+One historical retailer, overlapping customers across time, a single hidden item per invoice, possible product variants, and overlapping temporal sensitivity windows limit generalisation. Hit Rate@K equals Recall@K under the single-hidden-item protocol. Association is not causation. Passing GitHub Actions confirms configured tests run successfully, not that empirical research claims have been independently peer-reviewed.
 
-## Acceptance criteria
+## Attribution
 
-- [ ] Dataset acquired and provenance recorded.
-- [ ] Audit and cleaning counts saved.
-- [ ] Basket construction documented and tested.
-- [ ] Apriori unit tests pass.
-- [ ] Frequent itemsets match mlxtend on controlled and real data.
-- [ ] Rule metrics independently checked.
-- [ ] Chronological holdout evaluation completed without leakage.
-- [ ] Popularity/co-occurrence baselines evaluated.
-- [ ] Threshold sensitivity and temporal stability assessed.
-- [ ] Figures, tables and limitations documented.
-
-## Limitations
-
-This is a historical single-retailer dataset. It cannot support claims about all UK supermarkets, current UK-wide purchasing behaviour, household affordability or causal effects of product placement. Association rules describe co-occurrence, not causation.
+Chen, D. (2015). *Online Retail* [Dataset]. UCI Machine Learning Repository. [DOI:10.24432/C5BW33](https://doi.org/10.24432/C5BW33). Source dataset licensed CC BY 4.0.
