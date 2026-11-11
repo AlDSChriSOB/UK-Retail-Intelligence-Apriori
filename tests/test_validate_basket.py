@@ -43,6 +43,6 @@ def test_rejects_invalid_baskets(tmp_path, rows, expected):
 
 def test_rejects_binary_xlsx_signature(tmp_path):
     path = tmp_path / "basket.xls"
-    path.write_bytes(b"PK\\x03\\x04bad")
+    path.write_bytes(bytes([80, 75, 3, 4]) + b"bad")
     with pytest.raises((ValueError, UnicodeDecodeError)):
         validate_basket(path)
