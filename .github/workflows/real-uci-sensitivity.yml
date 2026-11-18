@@ -1,0 +1,29 @@
+name: Real UCI repeated sensitivity benchmark
+on:
+  push:
+    branches: [research/sensitivity-benchmarks-20261118]
+    paths:
+      - 'src/repeated_sensitivity.py'
+      - '.github/workflows/real-uci-sensitivity.yml'
+  workflow_dispatch:
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - name: Obtain official UCI workbook
+        run: python -m src.data
+      - name: Run repeated comparisons and fail on any disagreement
+        run: python -m src.repeated_sensitivity "data/raw/Online Retail.xlsx" --repeats 2
+      - name: Preserve measured JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repeated-real-uci-sensitivity-evidence
+          path: reports/generated/repeated_sensitivity.json
+          if-no-files-found: warn
