@@ -1,0 +1,33 @@
+name: Real UCI chronological rule stability
+on:
+  push:
+    branches: [research/chronological-rule-stability-20261118]
+    paths:
+      - 'src/real_rule_stability.py'
+      - '.github/workflows/real-rule-stability.yml'
+  workflow_dispatch:
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - name: Obtain official UCI workbook
+        run: |
+          python - <<'PY'
+          from src.data import download_dataset, extract_dataset
+          print(extract_dataset(download_dataset()))
+          PY
+      - name: Run chronological holdout stability
+        run: python -m src.real_rule_stability "data/raw/Online Retail.xlsx"
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-uci-rule-stability
+          path: reports/generated/rule_stability.json
+          if-no-files-found: warn
