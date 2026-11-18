@@ -1,0 +1,40 @@
+name: Real UCI mlxtend equivalence
+on:
+  push:
+    branches:
+      - experiment/real-uci-apriori-runtime-20261118
+    paths:
+      - 'src/real_data_apriori_experiment.py'
+      - '.github/workflows/real-uci-mlxtend.yml'
+  workflow_dispatch:
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download official UCI Online Retail workbook
+        run: |
+          python - <<'PY'
+          from src.data import download_dataset, extract_dataset
+          archive = download_dataset()
+          workbook = extract_dataset(archive)
+          print("Dataset workbook:", workbook)
+          PY
+      - name: Validate independent Apriori against mlxtend on real training invoices
+        run: |
+          python -m src.real_data_apriori_experiment "data/raw/Online Retail.xlsx" --max-invoices 100 --output reports/generated/real_uci_100.json
+          python -m src.real_data_apriori_experiment "data/raw/Online Retail.xlsx" --max-invoices 300 --output reports/generated/real_uci_300.json
+          python -m src.real_data_apriori_experiment "data/raw/Online Retail.xlsx" --max-invoices 1000 --output reports/generated/real_uci_1000.json
+      - name: Upload actual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-uci-mlxtend-evidence
+          path: reports/generated/real_uci_*.json
+          if-no-files-found: warn
