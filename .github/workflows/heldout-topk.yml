@@ -26,10 +26,12 @@ jobs:
           PY
       - name: Execute held-out basket completion
         run: python -m src.heldout_topk "data/raw/Online Retail.xlsx" --bootstrap 500
+      - name: Generate publication tables and figures from executed results
+        run: python -m src.evidence_report reports/generated/heldout_topk.json
       - name: Upload numerical evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: heldout-topk-real-uci-evidence
-          path: reports/generated/heldout_topk.json
+          path: reports/generated/
           if-no-files-found: warn
