@@ -1,0 +1,35 @@
+name: Real UCI multi-origin paired cluster evaluation
+on:
+  push:
+    branches: [research/heldout-topk-evaluation-20261118]
+    paths:
+      - 'src/temporal_clustered.py'
+      - 'tests/test_temporal_clustered.py'
+      - '.github/workflows/temporal-clustered.yml'
+  workflow_dispatch:
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pytest -q tests/test_heldout_topk.py tests/test_temporal_clustered.py
+      - name: Download official UCI workbook
+        run: |
+          python - <<'PY'
+          from src.data import download_dataset, extract_dataset
+          print(extract_dataset(download_dataset()))
+          PY
+      - name: Evaluate multiple origins and paired cluster intervals
+        run: python -m src.temporal_clustered "data/raw/Online Retail.xlsx" --bootstrap 500
+      - name: Upload scientific evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: temporal-paired-customer-cluster-evidence
+          path: reports/generated/temporal_clustered.json
+          if-no-files-found: warn
