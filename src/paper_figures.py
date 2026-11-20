@@ -44,7 +44,7 @@ def render(evidence: Path, output: Path):
 
     supports=sorted(set(c["min_support"] for c in folds[0]["configurations"]))
     confidences=sorted(set(c["min_confidence"] for c in folds[0]["configurations"]))
-    fig,axes=plt.subplots(1,3,figsize=(10.5,3.5),sharey=True)
+    fig,axes=plt.subplots(1,3,figsize=(11.5,3.7),sharey=True)
     for ax,fold in zip(axes,folds):
         matrix=np.array([[100*next(c for c in fold["configurations"]
             if np.isclose(c["min_support"],s) and np.isclose(c["min_confidence"],q))
@@ -59,8 +59,9 @@ def render(evidence: Path, output: Path):
                 ax.text(j,i,f"{matrix[i,j]:.1f}",ha="center",va="center",
                         color="white" if matrix[i,j]<12 else "black",fontsize=8)
     axes[0].set_ylabel("Minimum support")
-    fig.colorbar(im,ax=axes.tolist(),label="Apriori Hit Rate@10 (%)",shrink=.78)
-    fig.subplots_adjust(left=.09,right=.88,bottom=.18,top=.85,wspace=.18)
+    fig.subplots_adjust(left=.08,right=.85,bottom=.18,top=.84,wspace=.18)
+    cax=fig.add_axes([.89,.23,.018,.55])
+    fig.colorbar(im,cax=cax,label="Apriori Hit Rate@10 (%)")
     fig.savefig(output/"figure_2_threshold_sensitivity.pdf")
     fig.savefig(output/"figure_2_threshold_sensitivity.png",dpi=220)
     plt.close(fig)
