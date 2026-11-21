@@ -1,0 +1,35 @@
+name: Project 06 FP-Growth recency robustness real UCI
+on:
+  push:
+    branches: [research/project-06-fpgrowth-recency]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - name: Test leakage-free history window construction
+        run: python -m pytest -q tests/test_project06_fpgrowth_recency.py
+      - name: Download official UCI workbook
+        run: |
+          python - <<'PY'
+          from src.data import download_dataset,extract_dataset
+          print(extract_dataset(download_dataset()))
+          PY
+      - name: Run genuine-data matched recency experiments
+        run: python -m projects.project06_fpgrowth_recency.analysis "data/raw/Online Retail.xlsx"
+      - name: Generate manuscript and figures from measured JSON
+        run: python -m projects.project06_fpgrowth_recency.paper reports/generated/project06_recency.json
+      - name: Upload reproducibility evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: project06-fpgrowth-recency-real-uci
+          if-no-files-found: error
+          path: |
+            reports/generated/project06_recency.json
+            reports/generated/project06_paper/
