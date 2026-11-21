@@ -1,0 +1,37 @@
+name: Project 02 real UCI FP-Growth benchmark
+on:
+  push:
+    branches: [research/project-02-fpgrowth]
+  workflow_dispatch:
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pytest -q tests/test_project02_fpgrowth.py tests/test_project02_recommendation.py
+      - name: Download genuine UCI workbook
+        run: |
+          python - <<'PY'
+          from src.data import download_dataset, extract_dataset
+          print(extract_dataset(download_dataset()))
+          PY
+      - name: Run exact-equivalence and resource comparison
+        run: python -m projects.project02_fpgrowth.benchmark "data/raw/Online Retail.xlsx"
+      - name: Evaluate paired recommendation accuracy and clustered uncertainty
+        run: python -m projects.project02_fpgrowth.recommendation "data/raw/Online Retail.xlsx" --bootstrap 300
+      - name: Generate evidence-backed publication figures and manuscript
+        run: python -m projects.project02_fpgrowth.paper reports/generated/project02_fpgrowth.json reports/generated/project02_recommendation.json
+      - name: Archive measured evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: project02-fpgrowth-real-uci
+          path: |
+            reports/generated/project02_fpgrowth.json
+            reports/generated/project02_recommendation.json
+            reports/generated/project02_paper/
+          if-no-files-found: error
