@@ -17,7 +17,9 @@ def build(resource_path, recommendation_path, out_dir):
     fig,ax=plt.subplots(figsize=(7.2,4.4))
     for method in ("apriori","cosine","popularity"):
         ax.plot(x,[100*f["metrics"]["10"][method] for f in folds],marker="o",label=method.title())
-    ax.plot(x,[100*f["metrics"]["10"]["fpgrowth"] for f in folds],marker="s",\n            linestyle="--",linewidth=2.0,color="black",zorder=10,\n            label="FP-Growth (identical to Apriori)")
+    ax.plot(x,[100*f["metrics"]["10"]["fpgrowth"] for f in folds],marker="s",
+            linestyle="--",linewidth=2.0,color="black",zorder=10,
+            label="FP-Growth (identical to Apriori)")
     ax.set_xticks(x,[f"{int(f['origin']*100)}% train" for f in folds])
     ax.set_ylabel("Hit Rate@10 (%)")
     ax.set_xlabel("Chronological training origin")
