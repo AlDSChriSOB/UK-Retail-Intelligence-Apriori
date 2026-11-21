@@ -24,7 +24,7 @@ def build(resource_path, recommendation_path, out_dir):
     ax.set_ylabel("Hit Rate@10 (%)")
     ax.set_xlabel("Chronological training origin")
     ax.set_title("Matched-miner accuracy and competing baselines")
-    ax.legend(ncol=2,frameon=False,loc="lower left");ax.grid(alpha=.2)
+    ax.legend(ncol=2,frameon=False,loc="upper center",bbox_to_anchor=(.5,-.18));ax.grid(alpha=.2)
     fig.tight_layout()
     for ext in ("pdf","png"):
         fig.savefig(out/f"figure_1_accuracy.{ext}",dpi=240)
