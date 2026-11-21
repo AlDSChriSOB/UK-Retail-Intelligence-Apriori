@@ -1,0 +1,34 @@
+name: Project 04 UK retail temporal rule stability
+on:
+  push:
+    branches: [research/project-04-seasonal-drift]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - name: Test temporal rule statistics
+        run: python -m pytest -q tests/test_project04_rule_drift.py
+      - name: Download genuine UCI workbook
+        run: |
+          python - <<'PY'
+          from src.data import download_dataset,extract_dataset
+          print(extract_dataset(download_dataset()))
+          PY
+      - name: Real-data chronological drift and rule retention
+        run: python -m projects.project04_rule_drift.analysis "data/raw/Online Retail.xlsx"
+      - name: Generate manuscript and figures from verified data
+        run: python -m projects.project04_rule_drift.paper reports/generated/project04_drift.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project04-rule-drift-evidence
+          if-no-files-found: error
+          path: |
+            reports/generated/project04_drift.json
+            reports/generated/project04_paper/
