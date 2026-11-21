@@ -1,6 +1,6 @@
 # Temporal robustness of association-rule basket completion in UK online retail: a reproducible comparative study
 
-**Manuscript status:** Research draft, not yet submission-ready. Earlier numerical results were verified from successful GitHub Actions runs; the expanded comparator and sensitivity grid completed successfully on GitHub Actions run 44745182299, with artifact 14633825538 independently inspected. Results remain exploratory and should not be interpreted as online uplift.
+**Manuscript status:** Journal-neutral IMRaD submission candidate; final journal-specific layout, author metadata and declarations pending. Earlier numerical results were verified from successful GitHub Actions runs; the expanded comparator and sensitivity grid completed successfully on GitHub Actions run 44745182299, with artifact 14633825538 independently inspected. Results remain exploratory and should not be interpreted as online uplift.
 
 ## Abstract
 **Background:** Association rules are interpretable but may fail to generalize across changing retail demand. **Objective:** Assess whether training-only directional pair rules recover a concealed item from later retail baskets more reliably than simple baselines, and evaluate temporal stability. **Methods:** The public UCI Online Retail transaction workbook was restricted to positive, non-cancelled UK invoices and converted into invoice–product binary incidence data. The primary experiment trained on the first 70% of chronological invoices and evaluated a randomly concealed train-known product from eligible later invoices. Three additional non-overlapping temporal windows were evaluated using expanding 50%, 60% and 70% training histories and subsequent 10% test windows. Hit Rate@K, paired hit-rate differences and customer-cluster bootstrap intervals were computed. **Results:** In the initial 70/30 test, 4,904 eligible invoices yielded Hit Rate@10 of 13.17% for association rules, 3.53% for popularity and 0.29% for a seeded random baseline. Across three additional temporal windows (n=1,630; 1,658; 1,620 eligible invoices), rule-based Hit Rate@10 was 18.04%, 17.73% and 13.83%, versus popularity at 6.38%, 4.70% and 3.21%. All three exploratory customer-clustered 95% bootstrap intervals for the paired difference in Hit Rate@10 were positive. **Conclusions:** Directional pair rules outperformed the tested simple baselines in retrospective within-invoice basket completion, but these results do not establish future-purchase prediction, online conversion lift, or external validity. In the expanded benchmark, cosine similarity outperformed summed-confidence Apriori at the pre-specified 1% support and 20% confidence setting in all three windows (HR@10: 21.96%, 21.71%, 21.17% versus 16.87%, 17.13%, 14.20%). Apriori performance varied considerably with thresholds. Thus the interpretable rule approach was not the best tested method.
@@ -13,12 +13,12 @@ Market-basket association rules quantify frequent product co-purchases and offer
 ## 2. Related work and conceptual background
 Association-rule mining formalizes support and confidence for co-occurring itemsets. For antecedent A and consequent B, support(A,B) is the proportion of training invoices containing both; confidence(A→B) is the proportion containing B among invoices containing A. Rule confidence need not represent causal dependence and is influenced by item prevalence. Popularity ranking is a strong diagnostic baseline for non-personalized retail recommendation. Co-occurrence counts and cosine-normalized binary item similarity offer complementary item-item baselines without minimum-support filtering. Offline basket completion differs fundamentally from predicting a customer's next transaction.
 
-**Reference verification note:** Bibliographic entries must be checked against original publisher records before submission. Do not insert unverified DOI, page numbers or quotations.
+**Source citations:** The study draws on the original Apriori publication [2], the UCI dataset [1] and the foundational bootstrap reference [3]. Bibliographic metadata below have been checked against the dataset repository, VLDB archive and journal record.
 
 ## 3. Materials and methods
 
 ### 3.1 Data provenance and cleaning
-Data: UCI Machine Learning Repository, Online Retail (dataset 352), downloaded from the official UCI archive at https://archive.ics.uci.edu/dataset/352/online+retail . The cleaning code drops rows with missing invoice, stock code or timestamp, excludes invoice numbers beginning C, non-positive quantities and prices, and non-UK transactions. Repeated invoice-product lines are collapsed to binary presence. Products are identified by StockCode; this may retain catalogue synonyms and stock-code inconsistencies. CustomerID may be missing.
+Data: UCI Machine Learning Repository, Online Retail (dataset 352) [1], downloaded from the official UCI archive at https://archive.ics.uci.edu/dataset/352/online+retail . The cleaning code drops rows with missing invoice, stock code or timestamp, excludes invoice numbers beginning C, non-positive quantities and prices, and non-UK transactions. Repeated invoice-product lines are collapsed to binary presence. Products are identified by StockCode; this may retain catalogue synonyms and stock-code inconsistencies. CustomerID may be missing.
 
 ### 3.2 Chronological splitting
 Invoices are ordered by minimum InvoiceDate and InvoiceNo. The original primary analysis uses a 70/30 chronological split. Three additional expanding-window analyses use train fractions 0.50, 0.60 and 0.70 and the next 10% of invoices as each test window. All models are re-estimated on the training portion of each fold. Adjacent test windows are disjoint; training histories overlap by design.
@@ -36,7 +36,7 @@ The expanded benchmark fixes minimum-support values at 0.005, 0.01 and 0.02 and 
 Per-invoice hit indicators for all methods share the same concealed target. For each pairwise model comparison, the mean difference in hit indicators estimates the difference in Hit Rate@K. The earlier temporal analysis uses 500 percentile bootstrap replicates, resampling known CustomerID clusters within each fold; invoices with missing CustomerID receive invoice-specific clusters. The expanded sensitivity grid uses 300 replicates per configuration. Intervals are exploratory, not multiplicity-adjusted, and unknown repeat customers can remain dependent.
 
 ### 3.7 Computational reproducibility
-Python implementation: src/heldout_topk.py, src/temporal_clustered.py, src/robust_benchmark.py. GitHub Actions workflow definitions: .github/workflows/heldout-topk.yml, temporal-clustered.yml and robust-benchmark.yml. Unit tests exercise ranking exclusions and deterministic cluster-bootstrap behavior. The UCI workbook is downloaded during CI; generated JSON and figures are archived as workflow artifacts. Pseudorandom seeds and thresholds are recorded in output. Dependency versions are constrained by minimum versions in requirements.txt rather than fully locked; exact environment snapshots and dataset checksums remain desirable.
+Python implementation: src/heldout_topk.py, src/temporal_clustered.py, src/robust_benchmark.py. GitHub Actions workflow definitions: .github/workflows/heldout-topk.yml, temporal-clustered.yml and robust-benchmark.yml. Unit tests exercise ranking exclusions and deterministic cluster-bootstrap behavior. The UCI workbook is downloaded during CI; generated JSON and figures are archived as workflow artifacts. Pseudorandom seeds and thresholds are recorded in output. The submission evidence workflow archives an exact pip-freeze snapshot and workbook SHA-256, alongside figure PDFs/PNGs and the machine-readable sensitivity grid. See docs/REPRODUCIBILITY.md. The source requirements remain minimum-version specifications; the captured environment snapshot identifies the actual CI environment.
 
 ## 4. Results (verified prior experiments)
 
@@ -89,7 +89,7 @@ The positive temporal paired differences suggest that co-purchase structure carr
 6. **Baseline breadth:** Current comparators omit matrix factorization, neural recommenders and sequential session models. Those require careful fit-for-purpose adaptation.
 7. **Catalogue integrity:** StockCode aliases and description collisions can alter co-occurrence patterns.
 8. **Algorithm definition:** The initial maximum-confidence rule scorer differs from the expanded summed-confidence scorer.
-9. **Reproducibility:** Official public data and CI scripts are available, but full dependency pinning and artifact hashes remain future improvements.
+9. **Reproducibility:** Official public data and CI scripts are available; the submission workflow records the workbook SHA-256 and pip-freeze environment. These files should be checked in the successful artifact before submission.
 10. **Causal inference:** No online randomized experiment, conversion measure, profit measure or business uplift estimate is available.
 
 ## 7. Conclusions
@@ -98,7 +98,19 @@ Using real historical UK invoices and chronological evaluation, training-only di
 ## Data availability, code availability and declarations
 **Data:** Public UCI Online Retail dataset 352; raw data not redistributed in the repository. **Code:** https://github.com/AlDSChriSOB/UK-Retail-Intelligence-Apriori . **Evidence:** GitHub Actions run 44285881737 (single holdout), 44744099669 (temporal clustered), and expanded comparator run 44745182299 (artifact 14633825538). **Ethics:** Secondary analysis of public transaction data; do not release individual-level CustomerID-linked outcomes. **Funding, conflicts, author contributions:** Author must confirm before submission; not assumed. **Generative AI disclosure:** Drafting assistance was used; the author must verify scientific claims and comply with target-journal policies.
 
-## References to verify before submission
-- UCI Machine Learning Repository. *Online Retail* (dataset 352), https://archive.ics.uci.edu/dataset/352/online+retail .
-- Agrawal, R., and Srikant, R. (1994). *Fast Algorithms for Mining Association Rules*. Proceedings of VLDB. Verify final publisher metadata.
-- Efron, B. (1979). *Bootstrap Methods: Another Look at the Jackknife*. *Annals of Statistics*. Verify citation metadata.
+## References
+1. Chen, D. (2015). *Online Retail* [Data set]. UCI Machine Learning Repository. https://doi.org/10.24432/C5BW33
+2. Agrawal, R., & Srikant, R. (1994). Fast algorithms for mining association rules in large databases. In *Proceedings of the 20th International Conference on Very Large Data Bases* (pp. 487–499). Morgan Kaufmann. https://www.vldb.org/conf/1994/P487.PDF
+3. Efron, B. (1979). Bootstrap methods: Another look at the jackknife. *The Annals of Statistics, 7*(1), 1–26. https://doi.org/10.1214/aos/1176344552
+
+## Figure legends and supplementary material
+**Figure 1.** Chronological-window Hit Rate@10 for cosine item similarity, summed-confidence directional pair rules, raw co-occurrence and popularity. Fixed rule setting: support 0.01, confidence 0.20. Error bars are not shown; paired clustered intervals are reported in the text.
+
+**Figure 2.** Directional pair-rule Hit Rate@10 across all nine minimum-support and minimum-confidence combinations, separately for the three chronological windows. Cells show percentage hit rates. This is exploratory sensitivity analysis, not test-set hyperparameter optimization.
+
+**Supplementary Table S1.** Full window × threshold × K × method performance grid, including paired rule-minus-comparator bootstrap intervals where applicable, in machine-readable CSV format.
+
+**Figure generation:** `python -m src.paper_figures reports/generated/robust_benchmark.json`. Figure PDF and PNG files are produced by the submission-evidence workflow and should be checked for legibility before final submission.
+
+## Journal submission formatting and required author metadata
+This draft follows a **journal-neutral IMRaD structure**, with a structured abstract, numbered sections, tables, numbered references, figure legends, reproducibility and declarations. It is **not** represented as compliant with a particular journal's word limits, abstract structure, artwork specifications or reference style until a target journal is selected. Author-supplied details still required: final author order, affiliation(s), corresponding author, ORCID (if any), funding, competing interests, ethics statement as applicable, acknowledgments and journal-required AI-use disclosure. No journal acceptance or submission is claimed.
