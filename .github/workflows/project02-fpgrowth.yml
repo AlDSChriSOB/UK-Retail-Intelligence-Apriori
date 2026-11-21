@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install -r requirements.txt
-      - run: python -m pytest -q tests/test_project02_fpgrowth.py
+      - run: python -m pytest -q tests/test_project02_fpgrowth.py tests/test_project02_recommendation.py
       - name: Download genuine UCI workbook
         run: |
           python - <<'PY'
@@ -22,9 +22,16 @@ jobs:
           PY
       - name: Run exact-equivalence and resource comparison
         run: python -m projects.project02_fpgrowth.benchmark "data/raw/Online Retail.xlsx"
+      - name: Evaluate paired recommendation accuracy and clustered uncertainty
+        run: python -m projects.project02_fpgrowth.recommendation "data/raw/Online Retail.xlsx" --bootstrap 300
+      - name: Generate evidence-backed publication figures and manuscript
+        run: python -m projects.project02_fpgrowth.paper reports/generated/project02_fpgrowth.json reports/generated/project02_recommendation.json
       - name: Archive measured evidence
         uses: actions/upload-artifact@v4
         with:
           name: project02-fpgrowth-real-uci
-          path: reports/generated/project02_fpgrowth.json
+          path: |
+            reports/generated/project02_fpgrowth.json
+            reports/generated/project02_recommendation.json
+            reports/generated/project02_paper/
           if-no-files-found: error
