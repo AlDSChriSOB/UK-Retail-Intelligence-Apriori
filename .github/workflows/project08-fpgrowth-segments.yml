@@ -1,0 +1,35 @@
+name: Project 08 FP-Growth customer segmentation real UCI
+on:
+  push:
+    branches: [research/project-08-fpgrowth-customer-segments]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - name: Test leakage-controlled RFM
+        run: python -m pytest -q tests/test_project08_fpgrowth_segments.py
+      - name: Download genuine UCI workbook
+        run: |
+          python - <<'PY'
+          from src.data import download_dataset,extract_dataset
+          print(extract_dataset(download_dataset()))
+          PY
+      - name: Run three chronological RFM recommendation experiments
+        run: python -m projects.project08_fpgrowth_segments.analysis "data/raw/Online Retail.xlsx"
+      - name: Generate evidence-derived paper and figures
+        run: python -m projects.project08_fpgrowth_segments.paper reports/generated/project08_segments.json
+      - name: Upload genuine-data evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: project08-fpgrowth-rfm-real-uci
+          if-no-files-found: error
+          path: |
+            reports/generated/project08_segments.json
+            reports/generated/project08_paper/
