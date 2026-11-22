@@ -1,0 +1,35 @@
+name: Project 09 Eclat three-miner real UCI verification
+on:
+  push:
+    branches: [research/project-09-eclat-comparative-mining]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - name: Test vertical Eclat exactness
+        run: python -m pytest -q tests/test_project09_eclat.py
+      - name: Download official UCI data
+        run: |
+          python - <<'PY'
+          from src.data import download_dataset,extract_dataset
+          print(extract_dataset(download_dataset()))
+          PY
+      - name: Benchmark three miners on genuine UK invoices
+        run: python -m projects.project09_eclat.analysis "data/raw/Online Retail.xlsx"
+      - name: Generate evidence-derived manuscript and figures
+        run: python -m projects.project09_eclat.paper reports/generated/project09_eclat.json
+      - name: Upload verified research evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: project09-eclat-real-uci-evidence
+          if-no-files-found: error
+          path: |
+            reports/generated/project09_eclat.json
+            reports/generated/project09_paper/
