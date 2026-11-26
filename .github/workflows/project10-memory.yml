@@ -1,0 +1,24 @@
+name: Project 10 corrective memory benchmark
+on:
+  pull_request:
+    paths:
+      - 'src/project10_memory.py'
+      - '.github/workflows/project10-memory.yml'
+  workflow_dispatch:
+jobs:
+  memory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt psutil
+      - run: python -m pytest tests/test_project10.py -q
+      - run: python -m src.project10_memory
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: project10-corrected-memory
+          path: reports/generated/project10_memory/
